@@ -1,16 +1,16 @@
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs) &nbsp;&nbsp;&nbsp; [![GitHub release (latest by date)](https://img.shields.io/github/v/release/DBuit/sidebar-card?style=for-the-badge)](https://github.com/DBuit/sidebar-card/releases) <!-- markdownlint-disable MD041 -->
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs) &nbsp;&nbsp;&nbsp; [![GitHub release (latest by date)](https://img.shields.io/github/v/release/wlm-m/sidebar-card?style=for-the-badge)](https://github.com/wlm-m/sidebar-card/releases) <!-- markdownlint-disable MD041 -->
 
-# Sidebar card [WIP]
+# Sidebar card
 
 This card adds a sidebar to your interface which you can configure globally so every page has the sidebar. It can replace your top navigation but can also give extra functionality.
 
-<a href="https://www.buymeacoffee.com/ZrUK14i" target="_blank"><img height="41px" width="167px" src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" /></a> <!-- markdownlint-disable MD033 -->
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/wlmmm)
 
 ## Installation Instructions
 
 ### HACS Installation
 
-Go to the hacs store and use the repo url `https://github.com/DBuit/sidebar-card` and add this as a custom repository under settings.
+Go to the hacs store and use the repo url `https://github.com/wlm-m/sidebar-card` and add this as a custom repository under settings.
 
 In Home Assistant's global settings, add the resource:
 
@@ -237,3 +237,8 @@ sidebar:
 ![Screenshot default](screenshots/screenshot-default.png)
 
 ![Screenshot styled](screenshots/screenshot-styled.png)
+
+## Acknowledgements
+
+This project is a fork of the original [Sidebar Card](https://github.com/DBuit/sidebar-card) by [@DBuit](https://github.com/DBuit).
+All original credit goes to them for the initial work.
