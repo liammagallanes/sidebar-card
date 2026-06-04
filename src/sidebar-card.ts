@@ -9,7 +9,7 @@
 // ##########################################################################################
 
 const SIDEBAR_CARD_TITLE = 'SIDEBAR-CARD';
-const SIDEBAR_CARD_VERSION = '0.1.9.8.1';
+const SIDEBAR_CARD_VERSION = '0.1.9.8.2';
 
 // ##########################################################################################
 // ###   Import dependencies
@@ -1282,5 +1282,13 @@ console.info(
   'color: white; background: dimgrey; font-weight: 700;'
 );
 
-buildSidebar();
+let _buildSidebarCalled = false;
+
+async function safeBuildSidebar() {
+  if (_buildSidebarCalled) return;
+  _buildSidebarCalled = true;
+  await buildSidebar();
+}
+
+safeBuildSidebar();
 watchLocationChange();
