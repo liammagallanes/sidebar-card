@@ -487,30 +487,32 @@ class SidebarCard extends LitElement {
         }
         break;
       case 'call-service': {
-        if (!tapAction.service) {
-          forwardHaptic('failure');
-          return;
-        }
-        const [domain, service] = tapAction.service.split('.', 2);
-        this.hass.callService(domain, service, tapAction.service_data);
-        forwardHaptic('success');
-      case 'service-js':
-        if (tapAction.service) {
-          try {
-            const code = tapAction.service
-            .toString()
-            .replace(/^\[\[\[\s*|\s*\]\]\]$/g, '');
-            const func = new Function(code);
-            func.call(this);
-            forwardHaptic('success');;
-          } catch (err) {
-            forwardHaptic('failure');
-          }
-        } else {
-          error2console('service-js', 'no service code found');
-        }
-        break;
-      }
+			  if (!tapAction.service) {
+				forwardHaptic('failure');
+				return;
+			  }
+			  const [domain, service] = tapAction.service.split('.', 2);
+			  this.hass.callService(domain, service, tapAction.service_data);
+			  forwardHaptic('success');
+			  break;  // <-- add this
+			}
+			case 'service-js': {    // <-- move outside previous block
+			  if (tapAction.service) {
+				try {
+				  const code = tapAction.service
+					.toString()
+					.replace(/^\[\[\[\s*|\s*\]\]\]$/g, '');
+				  const func = new Function(code);
+				  func.call(this);
+				  forwardHaptic('success');
+				} catch (err) {
+				  forwardHaptic('failure');
+				}
+			  } else {
+				error2console('service-js', 'no service code found');
+			  }
+			  break;
+			}
     }
   }
 
