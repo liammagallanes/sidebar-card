@@ -1202,6 +1202,14 @@ async function buildSidebar() {
         return;
       }
 
+			let appLayout = root.shadowRoot.querySelector('div');
+
+      // Prevent double build
+      if (appLayout.querySelector('#customSidebarWrapper')) {
+        log2console('buildSidebar', 'Sidebar already built, skipping!');
+        return;
+      }
+
       // Now safe to access shadowRoot
       if (sidebarConfig.hideTopMenu && sidebarConfig.hideTopMenu === true && offParam == null) {
         if (root.shadowRoot.querySelector('ch-header')) root.shadowRoot.querySelector('ch-header').style.display = 'none';
@@ -1236,7 +1244,6 @@ async function buildSidebar() {
         }
       }
 
-      let appLayout = root.shadowRoot.querySelector('div');
       let css = createCSS(sidebarConfig, document.body.clientWidth);
       let style: any = document.createElement('style');
       style.setAttribute('id', 'customSidebarStyle');
