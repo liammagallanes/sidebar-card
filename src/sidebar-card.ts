@@ -1106,21 +1106,38 @@ function subscribeEvents(appLayout: any, sidebarConfig: any, contentContainer: a
   }
 }
 
+let _sidebarListenerAdded = false;
+
 function watchLocationChange() {
+  if (_sidebarListenerAdded) return;
+  _sidebarListenerAdded = true;
+
   setTimeout(() => {
     window.addEventListener('location-changed', () => {
-      const root = getRoot();
-      if (!root) return; // location changed before finishing dom rendering
-      const appLayout = root.shadowRoot.querySelector('div');
-      const customSidebarWrapper = appLayout.querySelector('#customSidebarWrapper');
-      if (!customSidebarWrapper) {
-        buildSidebar();
-      } else {
-        const customSidebar = customSidebarWrapper.querySelector('#customSidebar');
-        if (!customSidebar) {
-          buildSidebar();
+      setTimeout(() => {
+        const root = getRoot();
+        if (!root) return;
+        const appLayout = root.shadowRoot.querySelector('div');
+        if (!appLayout) return;
+
+        const customSidebarWrapper = appLayout.querySelector('#customSidebarWrapper');
+        const customSidebarStyle = appLayout.querySelector('#customSidebarStyle');
+
+        // sidebar already fully built, nothing to do
+        if (customSidebarWrapper && customSidebarWrapper.querySelector('#customSidebar')) return;
+
+        // clean up any partial remnants before rebuilding
+        if (customSidebarWrapper) {
+          const view = customSidebarWrapper.querySelector('#view');
+          if (view) customSidebarWrapper.parentNode.insertBefore(view, customSidebarWrapper);
+          customSidebarWrapper.parentNode.removeChild(customSidebarWrapper);
         }
-      }
+        if (customSidebarStyle) {
+          customSidebarStyle.parentNode.removeChild(customSidebarStyle);
+        }
+
+        buildSidebar();
+      }, 150);
     });
   }, 1000);
 }
