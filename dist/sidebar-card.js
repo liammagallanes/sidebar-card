@@ -449,6 +449,21 @@ s.defineLocale("zh-tw",{months:"一月_二月_三月_四月_五月_六月_七月
 
               </ul>
             `:F``}
+        ${this.config.buttons&&this.config.buttons.length>0?F`
+              <div class="sidebarButtons">
+                ${(this.config.buttons||[]).filter(e=>this._evaluateVisibleCondition(e.conditional,this.hass)).map(e=>F`
+                    <button
+                      class="sidebarButton ${e.class?e.class:""}"
+                      @click="${()=>this._customAction(e)}"
+                    >
+                      ${e.icon?F`
+                            <ha-icon icon="${e.icon}"></ha-icon>
+                          `:F``}
+                      <span>${e.text}</span>
+                    </button>
+                  `)}
+              </div>
+            `:F``}
         ${this.config.template?F`
               <ul class="template">
                 ${this.templateLines.map(e=>F`
@@ -573,6 +588,36 @@ s.defineLocale("zh-tw",{months:"一月_二月_三月_四月_五月_六月_七月
         line-height: 24px;
         font-weight: 300;
         white-space: normal;
+      }
+
+      .sidebarButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .sidebarButton {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        font-weight: 400;
+        cursor: pointer;
+        background: var(--sidebar-button-background, rgba(255, 255, 255, 0.08));
+        color: var(--sidebar-button-text-color, var(--sidebar-text-color, #000));
+      }
+
+      .sidebarButton ha-icon {
+        color: var(--sidebar-button-icon-color, var(--sidebar-icon-color, #000));
+      }
+
+      .sidebarButton:active {
+        opacity: 0.7;
       }
 
       .clock {
