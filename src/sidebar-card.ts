@@ -184,6 +184,27 @@ class SidebarCard extends LitElement {
               </ul>
             `
           : html``}
+        ${this.config.buttons && this.config.buttons.length > 0
+          ? html`
+              <div class="sidebarButtons">
+                ${(this.config.buttons || []).filter(button => this._evaluateVisibleCondition(button.conditional, this.hass)).map((button) => {
+                  return html`
+                    <button
+                      class="sidebarButton ${button.class ? button.class : ''}"
+                      @click="${() => this._customAction(button)}"
+                    >
+                      ${button.icon
+                        ? html`
+                            <ha-icon icon="${button.icon}"></ha-icon>
+                          `
+                        : html``}
+                      <span>${button.text}</span>
+                    </button>
+                  `;
+                })}
+              </div>
+            `
+          : html``}
         ${this.config.template
           ? html`
               <ul class="template">
@@ -655,6 +676,36 @@ class SidebarCard extends LitElement {
         line-height: 24px;
         font-weight: 300;
         white-space: normal;
+      }
+
+      .sidebarButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .sidebarButton {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        font-weight: 400;
+        cursor: pointer;
+        background: var(--sidebar-button-background, rgba(255, 255, 255, 0.08));
+        color: var(--sidebar-button-text-color, var(--sidebar-text-color, #000));
+      }
+
+      .sidebarButton ha-icon {
+        color: var(--sidebar-button-icon-color, var(--sidebar-icon-color, #000));
+      }
+
+      .sidebarButton:active {
+        opacity: 0.7;
       }
 
       .clock {
