@@ -449,6 +449,21 @@ s.defineLocale("zh-tw",{months:"一月_二月_三月_四月_五月_六月_七月
 
               </ul>
             `:F``}
+        ${this.config.buttons&&this.config.buttons.length>0?F`
+              <div class="sidebarButtons">
+                ${(this.config.buttons||[]).filter(e=>this._evaluateVisibleCondition(e.conditional,this.hass)).map(e=>F`
+                    <button
+                      class="sidebarButton ${e.class?e.class:""}"
+                      @click="${()=>this._customAction(e)}"
+                    >
+                      ${e.icon?F`
+                            <ha-icon icon="${e.icon}"></ha-icon>
+                          `:F``}
+                      <span>${e.text}</span>
+                    </button>
+                  `)}
+              </div>
+            `:F``}
         ${this.config.template?F`
               <ul class="template">
                 ${this.templateLines.map(e=>F`
@@ -575,6 +590,36 @@ s.defineLocale("zh-tw",{months:"一月_二月_三月_四月_五月_六月_七月
         white-space: normal;
       }
 
+      .sidebarButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .sidebarButton {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        font-weight: 400;
+        cursor: pointer;
+        background: var(--sidebar-button-background, rgba(255, 255, 255, 0.08));
+        color: var(--sidebar-button-text-color, var(--sidebar-text-color, #000));
+      }
+
+      .sidebarButton ha-icon {
+        color: var(--sidebar-button-icon-color, var(--sidebar-icon-color, #000));
+      }
+
+      .sidebarButton:active {
+        opacity: 0.7;
+      }
+
       .clock {
         margin: 20px 0;
         position: relative;
@@ -660,4 +705,4 @@ s.defineLocale("zh-tw",{months:"一月_二月_三月_四月_五月_六月_七月
         display: flex;
         margin-top: auto;
       }
-    `}});let xe=!1;function je(e){return new Promise(t=>setTimeout(t,e))}async function Pe(){let e;for(;!e;)e=De(),e||await je(500);return e}async function Oe(){const e=await Pe();if(e.config.sidebar){const t=Object.assign({},e.config.sidebar);if(!t.width||t.width&&"number"==typeof t.width&&t.width>0&&t.width<100||t.width&&"object"==typeof t.width){const e=ve(),a=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer ha-sidebar"),e}(),s=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer"),e=e&&e.shadowRoot,e=e&&e.querySelector(".mdc-drawer-app-content"),e}(),n=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer"),e=e&&e.shadowRoot,e=e&&e.querySelector(".mdc-drawer"),e}(),r=be("sidebarOff");if(!e||!e.shadowRoot)return void Te("buildSidebar","Root element or shadowRoot not found!");let i=e.shadowRoot.querySelector("div");if(i.querySelector("#customSidebarWrapper"))return void we("buildSidebar","Sidebar already built, skipping!");t.hideTopMenu&&!0===t.hideTopMenu&&null==r&&(e.shadowRoot.querySelector("ch-header")&&(e.shadowRoot.querySelector("ch-header").style.display="none"),e.shadowRoot.querySelector("app-header")&&(e.shadowRoot.querySelector("app-header").style.display="none"),e.shadowRoot.querySelector("ch-footer")&&(e.shadowRoot.querySelector("ch-footer").style.display="none"),e.shadowRoot.getElementById("view")&&(e.shadowRoot.getElementById("view").style.minHeight="calc(100vh)")),t.hideHassSidebar&&!0===t.hideHassSidebar&&null==r&&(a&&(a.style.display="none"),s&&(s.style.marginLeft="0",s.style.paddingLeft="0"),n&&(n.style.display="none")),t.breakpoints?t.breakpoints&&(t.breakpoints.mobile||(t.breakpoints.mobile=768),t.breakpoints.tablet||(t.breakpoints.tablet=1024)):t.breakpoints={tablet:1024,mobile:768};let d=ge(t,document.body.clientWidth),o=document.createElement("style");o.setAttribute("id","customSidebarStyle"),i.appendChild(o),o.type="text/css",o.styleSheet?o.styleSheet.cssText=d:o.appendChild(document.createTextNode(d));let _=i.querySelector("#view");const l=document.createElement("div");l.setAttribute("id","customSidebarWrapper"),_.parentNode.insertBefore(l,_);let m=document.createElement("div");m.setAttribute("id","customSidebar"),l.appendChild(m),l.appendChild(_),await async function(e,t){const a=document.createElement("sidebar-card");a.setConfig(t),a.hass=te(),e.appendChild(a)}(m,t),function(e,t,a,s){window.addEventListener("resize",function(){He(e,t)},!0),"hideOnPath"in t&&(window.addEventListener("location-changed",()=>{t.hideOnPath.includes(window.location.pathname)?(a.classList.add("hideSidebar"),s.classList.add("hide")):(a.classList.remove("hideSidebar"),s.classList.remove("hide"))}),t.hideOnPath.includes(window.location.pathname)&&(we("subscribeEvents","Disable sidebar for this path"),a.classList.add("hideSidebar"),s.classList.add("hide")))}(i,t,_,m),setTimeout(function(){He(i,t)},1)}else Te("buildSidebar","Error sidebar in width config!")}else we("buildSidebar","No sidebar in config found!")}console.info(`%c  ${ke.padEnd(24)}%c\n  Version: ${"0.2".padEnd(9)}      `,"color: chartreuse; background: black; font-weight: 700;","color: white; background: dimgrey; font-weight: 700;");let We=!1;!async function(){We||(We=!0,await Oe())}(),xe||(xe=!0,setTimeout(()=>{window.addEventListener("location-changed",()=>{setTimeout(()=>{const e=ve();if(!e)return;const t=e.shadowRoot.querySelector("div");if(!t)return;const a=t.querySelector("#customSidebarWrapper"),s=t.querySelector("#customSidebarStyle");if(!a||!a.querySelector("#customSidebar")){if(a){const e=a.querySelector("#view");e&&a.parentNode.insertBefore(e,a),a.parentNode.removeChild(a)}s&&s.parentNode.removeChild(s),Oe()}},150)})},1e3));
+    `}});let xe=!1;function je(e){return new Promise(t=>setTimeout(t,e))}async function Pe(){let e;for(;!e;)e=De(),e||await je(500);return e}async function Oe(){const e=await Pe();if(e.config.sidebar){const t=Object.assign({},e.config.sidebar);if(!t.width||t.width&&"number"==typeof t.width&&t.width>0&&t.width<100||t.width&&"object"==typeof t.width){const e=ve(),a=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer ha-sidebar"),e}(),s=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer"),e=e&&e.shadowRoot,e=e&&e.querySelector(".mdc-drawer-app-content"),e}(),n=function(){let e=document.querySelector("home-assistant");return e=e&&e.shadowRoot,e=e&&e.querySelector("home-assistant-main"),e=e&&e.shadowRoot,e=e&&e.querySelector("ha-drawer"),e=e&&e.shadowRoot,e=e&&e.querySelector(".mdc-drawer"),e}(),r=be("sidebarOff");if(!e||!e.shadowRoot)return void Te("buildSidebar","Root element or shadowRoot not found!");let i=e.shadowRoot.querySelector("div");if(i.querySelector("#customSidebarWrapper"))return void we("buildSidebar","Sidebar already built, skipping!");t.hideTopMenu&&!0===t.hideTopMenu&&null==r&&(e.shadowRoot.querySelector("ch-header")&&(e.shadowRoot.querySelector("ch-header").style.display="none"),e.shadowRoot.querySelector("app-header")&&(e.shadowRoot.querySelector("app-header").style.display="none"),e.shadowRoot.querySelector("ch-footer")&&(e.shadowRoot.querySelector("ch-footer").style.display="none"),e.shadowRoot.getElementById("view")&&(e.shadowRoot.getElementById("view").style.minHeight="calc(100vh)")),t.hideHassSidebar&&!0===t.hideHassSidebar&&null==r&&(a&&(a.style.display="none"),s&&(s.style.marginLeft="0",s.style.paddingLeft="0"),n&&(n.style.display="none")),t.breakpoints?t.breakpoints&&(t.breakpoints.mobile||(t.breakpoints.mobile=768),t.breakpoints.tablet||(t.breakpoints.tablet=1024)):t.breakpoints={tablet:1024,mobile:768};let d=ge(t,document.body.clientWidth),o=document.createElement("style");o.setAttribute("id","customSidebarStyle"),i.appendChild(o),o.type="text/css",o.styleSheet?o.styleSheet.cssText=d:o.appendChild(document.createTextNode(d));let _=i.querySelector("#view");const l=document.createElement("div");l.setAttribute("id","customSidebarWrapper"),_.parentNode.insertBefore(l,_);let m=document.createElement("div");m.setAttribute("id","customSidebar"),l.appendChild(m),l.appendChild(_),await async function(e,t){const a=document.createElement("sidebar-card");a.setConfig(t),a.hass=te(),e.appendChild(a)}(m,t),function(e,t,a,s){window.addEventListener("resize",function(){He(e,t)},!0),"hideOnPath"in t&&(window.addEventListener("location-changed",()=>{t.hideOnPath.includes(window.location.pathname)?(a.classList.add("hideSidebar"),s.classList.add("hide")):(a.classList.remove("hideSidebar"),s.classList.remove("hide"))}),t.hideOnPath.includes(window.location.pathname)&&(we("subscribeEvents","Disable sidebar for this path"),a.classList.add("hideSidebar"),s.classList.add("hide")))}(i,t,_,m),setTimeout(function(){He(i,t)},1)}else Te("buildSidebar","Error sidebar in width config!")}else we("buildSidebar","No sidebar in config found!")}console.info(`%c  ${ke.padEnd(24)}%c\n  Version: ${"0.3".padEnd(9)}      `,"color: chartreuse; background: black; font-weight: 700;","color: white; background: dimgrey; font-weight: 700;");let We=!1;!async function(){We||(We=!0,await Oe())}(),xe||(xe=!0,setTimeout(()=>{window.addEventListener("location-changed",()=>{setTimeout(()=>{const e=ve();if(!e)return;const t=e.shadowRoot.querySelector("div");if(!t)return;const a=t.querySelector("#customSidebarWrapper"),s=t.querySelector("#customSidebarStyle");if(!a||!a.querySelector("#customSidebar")){if(a){const e=a.querySelector("#view");e&&a.parentNode.insertBefore(e,a),a.parentNode.removeChild(a)}s&&s.parentNode.removeChild(s),Oe()}},150)})},1e3));
