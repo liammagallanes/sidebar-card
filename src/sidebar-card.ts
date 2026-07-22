@@ -10,7 +10,7 @@
 // ##########################################################################################
 
 const SIDEBAR_CARD_TITLE = 'SIDEBAR-CARD';
-const SIDEBAR_CARD_VERSION = '0.3';
+const SIDEBAR_CARD_VERSION = '0.4';
 
 // ##########################################################################################
 // ###   Import dependencies
@@ -46,6 +46,7 @@ class SidebarCard extends LitElement {
   date = false;
   dateFormat = 'DD MMMM';
   bottomCard: any = null;
+  mediaPlayer: any = null;
   CUSTOM_TYPE_PREFIX = 'custom:';
 
   // Markus:
@@ -54,6 +55,7 @@ class SidebarCard extends LitElement {
   // Stores the bound event handler function for the 'location-changed' event, used to update the active menu item with the correct `this` context
   _clockInterval: any = null;
   _dateInterval: any = null;
+  _mediaProgressInterval: any = null;
   _boundLocationChange: any;
 
   /* **************************************** *
@@ -105,9 +107,34 @@ class SidebarCard extends LitElement {
           self._runDate();
         }, inc);
       }
+      if (this.config.mediaPlayer && this.config.mediaPlayer.showProgress !== false && !this._mediaProgressInterval) {
+        const inc = 1000;
+        // Delay the first run slightly to ensure the DOM is ready.
+        setTimeout(() => self._runMediaProgress(), 50);
+        this._mediaProgressInterval = setInterval(function() {
+          self._runMediaProgress();
+        }, inc);
+      }
 
       this._updateActiveMenu();
     }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('location-changed', this._boundLocationChange);
+    if (this._clockInterval) {
+      clearInterval(this._clockInterval);
+      this._clockInterval = null;
+    }
+    if (this._dateInterval) {
+      clearInterval(this._dateInterval);
+      this._dateInterval = null;
+    }
+    if (this._mediaProgressInterval) {
+      clearInterval(this._mediaProgressInterval);
+      this._mediaProgressInterval = null;
+    }
+  }
 
   /* **************************************** *
    *   Element's HTML renderer (lit-element)  *
@@ -126,6 +153,7 @@ class SidebarCard extends LitElement {
     this.date = this.config.date ? this.config.date : false;
     this.dateFormat = this.config.dateFormat ? this.config.dateFormat : 'DD MMMM';
     this.bottomCard = this.config.bottomCard ? this.config.bottomCard : null;
+    this.mediaPlayer = this.config.mediaPlayer ? this.config.mediaPlayer : null;
     this.updateMenu = this.config.hasOwnProperty('updateMenu') ? this.config.updateMenu : true;
 
     return html`
@@ -216,6 +244,13 @@ class SidebarCard extends LitElement {
               </ul>
             `
           : html``}
+        ${this.mediaPlayer
+          ? html`
+              <div class="mediaPlayerCard">
+                ${this._renderMediaPlayer()}
+              </div>
+            `
+          : html``}
         ${this.bottomCard
           ? html`
               <div class="bottom"></div>
@@ -296,6 +331,111 @@ class SidebarCard extends LitElement {
     const now = moment();
     now.locale(this.hass.language);
     this.shadowRoot.querySelector('.date').textContent = now.format(this.dateFormat);
+  }
+
+  // Updates the media player progress bar and elapsed/duration labels every second,
+  // interpolating position between hass state pushes so the bar moves smoothly
+  // instead of jumping only when Home Assistant sends an update.
+  _runMediaProgress() {
+    if (!this.mediaPlayer || this.mediaPlayer.showProgress === false) return;
+
+    const entityId = this.mediaPlayer.entity;
+    const stateObj = this.hass.states[entityId];
+    const bar = this.shadowRoot.querySelector('.mediaPlayerProgressBar');
+    const elapsedEl = this.shadowRoot.querySelector('.mediaPlayerElapsed');
+    const durationEl = this.shadowRoot.querySelector('.mediaPlayerDuration');
+
+    if (!stateObj || !bar) return;
+
+    const attrs = stateObj.attributes;
+    const duration = attrs.media_duration;
+
+    if (!duration) {
+      bar.style.width = '0%';
+      if (elapsedEl) elapsedEl.textContent = '0:00';
+      if (durationEl) durationEl.textContent = '0:00';
+      return;
+    }
+
+    let position = attrs.media_position || 0;
+    if (stateObj.state === 'playing' && attrs.media_position_updated_at) {
+      const updatedAt = new Date(attrs.media_position_updated_at).getTime();
+      const elapsedSinceUpdate = (Date.now() - updatedAt) / 1000;
+      position += elapsedSinceUpdate;
+    }
+    position = Math.min(Math.max(position, 0), duration);
+
+    const percent = (position / duration) * 100;
+    bar.style.width = `${percent}%`;
+
+    if (elapsedEl) elapsedEl.textContent = this._formatMediaTime(position);
+    if (durationEl) durationEl.textContent = this._formatMediaTime(duration);
+  }
+
+  _formatMediaTime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  _renderMediaPlayer() {
+    const entityId = this.mediaPlayer.entity;
+    const stateObj = this.hass.states[entityId];
+    const showProgress = this.mediaPlayer.showProgress !== false;
+
+    if (!stateObj || stateObj.state === 'unavailable') {
+      return html`<div class="mediaPlayerEmpty">Media player unavailable</div>`;
+    }
+
+    const attrs = stateObj.attributes;
+    const isPlaying = stateObj.state === 'playing';
+    const picture = attrs.entity_picture
+      ? this.hass.hassUrl(attrs.entity_picture)
+      : '';
+
+    return html`
+      <div
+        class="mediaPlayerArt"
+        style="${picture ? `background-image:url(${picture})` : ''}"
+      ></div>
+      <div class="mediaPlayerBody">
+        <div class="mediaPlayerInfo">
+          <div class="mediaPlayerTitle">${attrs.media_title || ''}</div>
+          <div class="mediaPlayerArtist">${attrs.media_artist || ''}</div>
+        </div>
+        ${showProgress
+          ? html`
+              <div class="mediaPlayerProgress">
+                <div class="mediaPlayerProgressTrack">
+                  <div class="mediaPlayerProgressBar"></div>
+                </div>
+                <div class="mediaPlayerTimes">
+                  <span class="mediaPlayerElapsed">0:00</span>
+                  <span class="mediaPlayerDuration">0:00</span>
+                </div>
+              </div>
+            `
+          : html``}
+      </div>
+      <div class="mediaPlayerControls">
+        <ha-icon
+          class="mediaPlayerButton"
+          icon="${isPlaying ? 'mdi:pause' : 'mdi:play'}"
+          @click="${() => this._mediaPlayerAction(entityId, 'media_play_pause')}"
+        ></ha-icon>
+        <ha-icon
+          class="mediaPlayerButton"
+          icon="mdi:skip-next"
+          @click="${() => this._mediaPlayerAction(entityId, 'media_next_track')}"
+        ></ha-icon>
+      </div>
+    `;
+  }
+
+  _mediaPlayerAction(entityId, service) {
+    this.hass.callService('media_player', service, { entity_id: entityId });
+    forwardHaptic('success');
   }
 
   updateSidebarSize(root) {
@@ -580,6 +720,11 @@ class SidebarCard extends LitElement {
         // --sidebar-icon-color: #000;
         // --sidebar-selected-text-color: #000;
         // --sidebar-selected-icon-color: #000;
+        // --media-player-background: rgba(255,255,255,0.08);
+        // --media-player-text-color: #000;
+        // --media-player-icon-color: #000;
+        // --media-player-track-color: rgba(0,0,0,0.15);
+        // --media-player-progress-color: #000;
         background-color:  var(--sidebar-background, var(--paper-listbox-background-color, var(--primary-background-color, #fff)));
       }
       .sidebar-inner {
@@ -706,6 +851,105 @@ class SidebarCard extends LitElement {
 
       .sidebarButton:active {
         opacity: 0.7;
+      }
+
+      .mediaPlayerCard {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: auto;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--media-player-background, rgba(255, 255, 255, 0.08));
+        color: var(--media-player-text-color, var(--sidebar-text-color, #000));
+      }
+
+      .mediaPlayerArt {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        background-size: cover;
+        background-position: center;
+        background-color: rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+      }
+
+      .mediaPlayerBody {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .mediaPlayerInfo {
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .mediaPlayerTitle {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mediaPlayerArtist {
+        font-size: 12px;
+        opacity: 0.7;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mediaPlayerProgress {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .mediaPlayerProgressTrack {
+        width: 100%;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--media-player-track-color, rgba(0, 0, 0, 0.15));
+        overflow: hidden;
+      }
+
+      .mediaPlayerProgressBar {
+        height: 100%;
+        width: 0%;
+        background: var(--media-player-progress-color, var(--sidebar-selected-icon-color, #000));
+        transition: width 0.9s linear;
+      }
+
+      .mediaPlayerTimes {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        opacity: 0.6;
+      }
+
+      .mediaPlayerControls {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .mediaPlayerButton {
+        cursor: pointer;
+        color: var(--media-player-icon-color, var(--sidebar-icon-color, #000));
+      }
+
+      .mediaPlayerButton:active {
+        opacity: 0.6;
+      }
+
+      .mediaPlayerEmpty {
+        padding: 12px;
+        font-size: 13px;
+        opacity: 0.6;
       }
 
       .clock {
