@@ -10,7 +10,7 @@
 // ##########################################################################################
 
 const SIDEBAR_CARD_TITLE = 'SIDEBAR-CARD';
-const SIDEBAR_CARD_VERSION = '0.4';
+const SIDEBAR_CARD_VERSION = '0.5';
 
 // ##########################################################################################
 // ###   Import dependencies
@@ -47,6 +47,7 @@ class SidebarCard extends LitElement {
   dateFormat = 'DD MMMM';
   bottomCard: any = null;
   mediaPlayer: any = null;
+  reactor: any = null;
   CUSTOM_TYPE_PREFIX = 'custom:';
 
   // Markus:
@@ -154,6 +155,7 @@ class SidebarCard extends LitElement {
     this.dateFormat = this.config.dateFormat ? this.config.dateFormat : 'DD MMMM';
     this.bottomCard = this.config.bottomCard ? this.config.bottomCard : null;
     this.mediaPlayer = this.config.mediaPlayer ? this.config.mediaPlayer : null;
+    this.reactor = this.config.reactor ? this.config.reactor : null;
     this.updateMenu = this.config.hasOwnProperty('updateMenu') ? this.config.updateMenu : true;
 
     return html`
@@ -166,6 +168,9 @@ class SidebarCard extends LitElement {
         : html``}
 
       <div class="sidebar-inner">
+        ${this.reactor
+          ? this._renderReactor()
+          : html``}
         ${this.digitalClock
           ? html`
               <h1 class="digitalClock${title ? ' with-title' : ''}${this.digitalClockWithSeconds ? ' with-seconds' : ''}"></h1>
@@ -258,6 +263,107 @@ class SidebarCard extends LitElement {
           : html``}
       </div>
     `;
+  }
+
+  /* **************************************** *
+   *   Reactor: generic, config-driven,       *
+   *   independently-animated decorative      *
+   *   layer stack (rings / images / dots).   *
+   *                                           *
+   *   Designed so future visual designs      *
+   *   (not just the current "arc reactor"    *
+   *   look) can be built entirely from YAML  *
+   *   config, without touching this file     *
+   *   again - just describe the layers.      *
+   * **************************************** */
+
+  // Example config shape (all fields optional unless noted):
+  //
+  // sidebar:
+  //   reactor:
+  //     size: 220                    # stage box in px, default 220
+  //     margin: '0 auto 10px'        # CSS margin for centering/spacing, default '0 auto 10px'
+  //     layers:
+  //       - type: ring               # 'ring' | 'image' | 'dots'  (required)
+  //         size: 142                # layer box size in px (required)
+  //         offset: 39                # left/top offset within the stage, in px (required)
+  //         borderWidth: 1            # ring only, default 1
+  //         borderColor: 'rgba(94,231,255,0.4)'   # ring only
+  //         boxShadow: '0 0 10px rgba(94,231,255,0.5)'  # ring only, optional glow
+  //         image: 'data:image/svg+xml;base64,...'      # image only (required for type: image)
+  //         rotation:
+  //           direction: ccw          # 'cw' | 'ccw' | omit for static
+  //           duration: 18s           # any valid CSS time value
+  //         dots:                     # optional, works on any layer type
+  //           - size: 5
+  //             color: '#5ee7ff'
+  //             glow: '0 0 6px 2px rgba(94,231,255,0.8)'
+  //             left: '50%'           # any CSS left value; combine with top for cardinal points,
+  //             top: '0'              # or fixed px coordinates for arbitrary placement
+  //         extraStyle: ''            # optional raw CSS appended to this layer's inline style,
+  //                                   # for one-off tweaks without needing a new layer type
+
+  _renderReactor() {
+    const reactor = this.reactor;
+    if (!reactor || !reactor.layers || !reactor.layers.length) return html``;
+
+    const size = reactor.size || 220;
+    const margin = reactor.margin || '0 auto 10px';
+
+    return html`
+      <div class="reactor" style="width:${size}px;height:${size}px;margin:${margin};">
+        ${reactor.layers.map((layer, index) => this._renderReactorLayer(layer, index))}
+      </div>
+    `;
+  }
+
+  _renderReactorLayer(layer: any, index: number) {
+    if (!layer || !layer.size) return html``;
+
+    const offset = layer.offset || 0;
+    let style = `width:${layer.size}px;height:${layer.size}px;left:${offset}px;top:${offset}px;`;
+
+    if (layer.type === 'ring') {
+      const borderWidth = layer.borderWidth !== undefined ? layer.borderWidth : 1;
+      const borderColor = layer.borderColor || 'rgba(94,231,255,0.4)';
+      style += `border-radius:50%;box-sizing:border-box;border:${borderWidth}px solid ${borderColor};`;
+      if (layer.boxShadow) {
+        style += `box-shadow:${layer.boxShadow};`;
+      }
+    } else if (layer.type === 'image') {
+      if (layer.image) {
+        style += `background-image:url("${layer.image}");background-size:contain;background-repeat:no-repeat;`;
+      }
+    }
+    // 'dots' type layers render no visible box of their own - just a rotating
+    // positioning wrapper for its dot children, so no extra CSS needed here.
+
+    if (layer.rotation && layer.rotation.direction) {
+      const duration = layer.rotation.duration || '20s';
+      const animName = layer.rotation.direction === 'cw' ? 'reactor-spin-cw' : 'reactor-spin-ccw';
+      style += `animation:${animName} ${duration} linear infinite;`;
+    }
+
+    if (layer.extraStyle) {
+      style += layer.extraStyle;
+    }
+
+    return html`
+      <div class="reactor-layer reactor-layer-${index}" style="${style}">
+        ${(layer.dots || []).map((dot) => this._renderReactorDot(dot))}
+      </div>
+    `;
+  }
+
+  _renderReactorDot(dot: any) {
+    const size = dot.size || 5;
+    const color = dot.color || '#5ee7ff';
+    const glow = dot.glow || '0 0 6px 2px rgba(94,231,255,0.8)';
+    const left = dot.left !== undefined ? dot.left : '50%';
+    const top = dot.top !== undefined ? dot.top : '50%';
+    const style = `width:${size}px;height:${size}px;background:${color};box-shadow:${glow};left:${left};top:${top};`;
+
+    return html`<div class="reactor-dot" style="${style}"></div>`;
   }
 
   _runClock() {
@@ -735,6 +841,28 @@ class SidebarCard extends LitElement {
         position: fixed;
         width: 0;
         overflow: hidden auto;
+      }
+      .reactor {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .reactor-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      .reactor-dot {
+        position: absolute;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
+      @keyframes reactor-spin-cw {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes reactor-spin-ccw {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(-360deg); }
       }
       .sidebarMenu {
         list-style: none;
